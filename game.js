@@ -46,7 +46,7 @@ class gameArea {
         //this.testCollision(this.peopleList);
         this.infectPeople(this.peopleList);
         Plotly.extendTraces('chart', {y:[[this.numInfected]]}, [0]);
-        console.log("the number infected is: " + this.numInfected);
+        //console.log("the number infected is: " + this.numInfected);
     }
 
     // movePerson (toMove) {
