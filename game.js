@@ -5,19 +5,33 @@ class gameArea {
         this.ctx = this.canvas.getContext('2d');
         this.width = 480;
         this.height = 270;
-        this.numPeople = 25;
+        this.numPeople = 100;
         this.peopleList = [];
-        this.numInfected = 0;
-        this.numNotInfected = 0;
+        this.numInfected = {
+            x: [],
+            y: [],
+            mode: 'lines'
+        };
+        this.numNotInfected = {
+            x: [],
+            y: [],
+            mode: 'lines'
+        };
+        this.infectedCount = 0;
+        this.notInfectedCount = 0;
         for (let i = 0; i < this.numPeople; i++) {
             this.peopleList[i] = new Person();
             if (this.peopleList[i].isInfected) {
-                this.numInfected = this.numInfected + 1;
+                this.infectedCount++;
             } else {
-                this.numNotInfected =  this.numInfected + 1;
+                this.notInfectedCount++;
             }
         }
-
+        this.numInfected.x.push(0);
+        this.numInfected.y.push(this.infectedCount);
+        this.numNotInfected.x.push(0);
+        this.numNotInfected.y.push(this.notInfectedCount);
+        this.framesPassed = 0;
     }
     
     initializeArea() {
@@ -28,12 +42,16 @@ class gameArea {
 
         //create the plot
         Plotly.plot('chart', [{
-            y:[this.numInfected], 
+            y:[this.infectedCount], 
+            type:'line'
+        }, {
+            y:[this.notInfectedCount],
             type:'line'
         }]);
     }
 
     update() {
+        this.framesPassed++;
         this.ctx.clearRect(0,0, this.width, this.height);
         //this.movePerson(this.a);
         for (let i = 0; i < this.peopleList.length; i++) {
@@ -45,8 +63,13 @@ class gameArea {
         }
         //this.testCollision(this.peopleList);
         this.infectPeople(this.peopleList);
-        Plotly.extendTraces('chart', {y:[[this.numInfected]]}, [0]);
-        //console.log("the number infected is: " + this.numInfected);
+        
+        Plotly.extendTraces('chart', {
+            y: [[this.infectedCount], [this.notInfectedCount]],
+        }, [0,1]);
+    
+        //console.log("the number infected is: " + this.infectedCount);
+        //console.log("the number not infected is: " + this.notInfectedCount);
     }
 
     // movePerson (toMove) {
@@ -119,8 +142,8 @@ class gameArea {
                     let compareTo = peopleList[j];
                     if (i != j && compareTo.isInfected && distance(curr, compareTo) < curr.radius + compareTo.infectionRadius) {
                         curr.isInfected = true;
-                        this.numInfected = this.numInfected + 1;
-                        this.numNotInfected = this.numNotInfected - 1;
+                        this.infectedCount = this.infectedCount + 1;
+                        this.notInfectedCount = this.notInfectedCount - 1;
                         break;
                     }
                 }
@@ -134,8 +157,8 @@ class Person {
         this.px = Math.random() * 480;
         this.py = Math.random() * 270;
         let degree = Math.random() * 2 * Math.PI;
-        this.vx = Math.cos(degree) * 1;
-        this.vy = Math.sin(degree) * 1;
+        this.vx = Math.cos(degree) * .25;
+        this.vy = Math.sin(degree) * .25;
         // this.vx = Math.random() * 1 + Math.random() * -1;
         // this.vy = Math.random() * 1 + Math.random() * -1;
         this.radius = 5;
@@ -173,7 +196,9 @@ function distance (person1, person2) {
 
 function updateCanvas () {
     area.update();
-    window.requestAnimationFrame(updateCanvas);
+    if (area.notInfectedCount != 0) {
+        window.requestAnimationFrame(updateCanvas);
+    }
 }
 
 let area = new gameArea();
