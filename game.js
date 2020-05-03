@@ -3,7 +3,7 @@ class gameArea {
         //this.a = new Person();
         this.canvas = document.createElement("canvas");
         this.ctx = this.canvas.getContext('2d');
-        this.width = 1000;
+        this.width = 720;
         this.height = 500;
         this.numPeople = 1000;
         this.peopleList = [];
@@ -24,13 +24,19 @@ class gameArea {
         this.infectedCount = 0;
         this.notInfectedCount = 0;
         for (let i = 0; i < this.numPeople; i++) {
-            this.peopleList[i] = new Person(this.width, this.height);
+            let isInfected = false;
+            if (Math.random() < .1) {
+                isInfected = true;
+            }
+            this.peopleList[i] = new Person(this.width, this.height, isInfected);
             if (this.peopleList[i].isInfected) {
                 this.infectedCount++;
             } else {
                 this.notInfectedCount++;
             }
         }
+        //this.peopleList[this.numPeople] = new Person (this.width, this.height, true);
+        this.infectedCount++;
         this.numInfected.x.push(0);
         this.numInfected.y.push(this.infectedCount);
         this.numNotInfected.x.push(0);
@@ -61,16 +67,10 @@ class gameArea {
         this.numNotInfected.y.push(this.notInfectedCount);
 
         Plotly.extendTraces('chart', {
-            //y: [[this.numInfected.y], [this.numNotInfected.y]],
             y: [[this.infectedCount],[this.notInfectedCount]],
-            //x: [[this.numInfected.x], [this.numNotInfected.x]],
         }, [0,1]);
     
-        //this.movePerson(this.a);
         this.drawFrame();
-        //this.testCollision(this.peopleList);
-        //console.log("the number infected is: " + this.infectedCount);
-        //console.log("the number not infected is: " + this.notInfectedCount);
     }
 
     drawFrame() {
@@ -79,14 +79,9 @@ class gameArea {
             curr.update();
             this.drawPerson(curr);
             this.drawInfectionRadius(curr);
-            //this.drawOverLap(curr);
         }
     }
 
-    // movePerson (toMove) {
-    //     toMove.px = toMove.px + toMove.vx;
-    //     toMove.py = toMove.py + toMove.vy;
-    // }
     drawOverLap (toDraw) {
         this.ctx.save();
         this.ctx.beginPath();
@@ -98,8 +93,8 @@ class gameArea {
 
         this.ctx.restore();
     }
+
     drawPerson (toDraw) {
-        //let ctx = this.canvas.getContext("2d");
         this.ctx.save();
         this.ctx.beginPath();
         this.ctx.arc(toDraw.px, toDraw.py, toDraw.radius,0,2 * Math.PI);
@@ -135,10 +130,6 @@ class gameArea {
                     curr.isOverlap = true;
                     compareTo.isOverlap = true;
                     changed = true;
-                    compareTo.vx *= -1;
-                    compareTo.vy *= -1;
-                    curr.vx *= -1;
-                    curr.vy *= -1;
                     break;
                 }
             }
@@ -148,41 +139,54 @@ class gameArea {
             
         }
     }
+
     infectPeople(peopleList) {
+        let touchingArray = [];
+        for (let i = 0; i < peopleList.length; i++) {
+            touchingArray[i] = false;
+        }
         for (let i = 0; i < peopleList.length; i++) {
             let curr = peopleList[i];
             let changed = false;
             if (!curr.isInfected) {
                 for (let j = 0; j < peopleList.length; j++) {
                     let compareTo = peopleList[j];
+                    if (i != j && distance(curr, compareTo) < curr.radius + compareTo.radius) {
+                        touchingArray[i] = true;
+                        touchingArray[j] = true;
+                    }
                     if (i != j && compareTo.isInfected && distance(curr, compareTo) < curr.radius + compareTo.infectionRadius) {
-                        curr.isInfected = true;
-                        this.infectedCount = this.infectedCount + 1;
-                        this.notInfectedCount = this.notInfectedCount - 1;
-                        break;
+                        touchingArray[i] = true;
+                        touchingArray[j] = true;
+                        if (Math.random() < .25) {
+                            curr.isInfected = true;
+                            this.infectedCount = this.infectedCount + 1;
+                            this.notInfectedCount = this.notInfectedCount - 1;
+                            break;
+                        }
                     }
                 }
+            }
+        }
+        for (let i = 0; i < peopleList.length; i++) {
+            if (touchingArray[i]) {
+                peopleList[i].vx *= -1;
+                peopleList[i].vy *= -1;
             }
         }
     }
 }
 
 class Person {
-    constructor(width, height) {
+    constructor(width, height, isInfected) {
         this.px = Math.random() * width;
         this.py = Math.random() * height;
         let degree = Math.random() * 2 * Math.PI;
         this.vx = Math.cos(degree) * 1;
         this.vy = Math.sin(degree) * 1;
-        // this.vx = Math.random() * 1 + Math.random() * -1;
-        // this.vy = Math.random() * 1 + Math.random() * -1;
         this.radius = 2;
         this.infectionRadius = 5;
-        if (Math.random() > 0.1) {
-            this.isInfected = false; 
-        } else {
-            this.isInfected = true;
-        }
+        this.isInfected = isInfected;
         this.isOverlap = false;
     }
 
@@ -202,9 +206,6 @@ function distance (person1, person2) {
     let dx = person1.px - person2.px;
     let dy = person1.py - person2.py;
     let returnDist = Math.sqrt(dx * dx + dy * dy);
-    //console.log("the coordates of person 1 are: (" + person1.px + "," + person1.py + ")");
-    //console.log("the coordates of person 1 are: (" + person2.px + "," + person2.py + ")");
-    //console.log("the calculated distance is: " + returnDist);
 
     return returnDist;
 }
