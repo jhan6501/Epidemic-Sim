@@ -3,24 +3,28 @@ class gameArea {
         //this.a = new Person();
         this.canvas = document.createElement("canvas");
         this.ctx = this.canvas.getContext('2d');
-        this.width = 480;
-        this.height = 270;
-        this.numPeople = 100;
+        this.width = 1000;
+        this.height = 500;
+        this.numPeople = 1000;
         this.peopleList = [];
         this.numInfected = {
             x: [],
             y: [],
-            mode: 'lines'
+            mode: 'lines',
+            line: {color: 'red', width: 2},
+            name: 'infected count'
         };
         this.numNotInfected = {
             x: [],
             y: [],
-            mode: 'lines'
+            mode: 'lines',
+            line: {color: 'blue', width: 2},
+            name: 'not infected count'
         };
         this.infectedCount = 0;
         this.notInfectedCount = 0;
         for (let i = 0; i < this.numPeople; i++) {
-            this.peopleList[i] = new Person();
+            this.peopleList[i] = new Person(this.width, this.height);
             if (this.peopleList[i].isInfected) {
                 this.infectedCount++;
             } else {
@@ -41,19 +45,35 @@ class gameArea {
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
 
         //create the plot
-        Plotly.plot('chart', [{
-            y:[this.infectedCount], 
-            type:'line'
-        }, {
-            y:[this.notInfectedCount],
-            type:'line'
-        }]);
+        Plotly.plot('chart', [this.numInfected, this.numNotInfected]);
     }
 
     update() {
         this.framesPassed++;
         this.ctx.clearRect(0,0, this.width, this.height);
+        
+        this.infectPeople(this.peopleList);
+        
+        //updating the data sets
+        this.numInfected.x.push(this.framesPassed);
+        this.numInfected.y.push(this.infectedCount);
+        this.numNotInfected.x.push(this.framesPassed);
+        this.numNotInfected.y.push(this.notInfectedCount);
+
+        Plotly.extendTraces('chart', {
+            //y: [[this.numInfected.y], [this.numNotInfected.y]],
+            y: [[this.infectedCount],[this.notInfectedCount]],
+            //x: [[this.numInfected.x], [this.numNotInfected.x]],
+        }, [0,1]);
+    
         //this.movePerson(this.a);
+        this.drawFrame();
+        //this.testCollision(this.peopleList);
+        //console.log("the number infected is: " + this.infectedCount);
+        //console.log("the number not infected is: " + this.notInfectedCount);
+    }
+
+    drawFrame() {
         for (let i = 0; i < this.peopleList.length; i++) {
             let curr = this.peopleList[i];
             curr.update();
@@ -61,15 +81,6 @@ class gameArea {
             this.drawInfectionRadius(curr);
             //this.drawOverLap(curr);
         }
-        //this.testCollision(this.peopleList);
-        this.infectPeople(this.peopleList);
-        
-        Plotly.extendTraces('chart', {
-            y: [[this.infectedCount], [this.notInfectedCount]],
-        }, [0,1]);
-    
-        //console.log("the number infected is: " + this.infectedCount);
-        //console.log("the number not infected is: " + this.notInfectedCount);
     }
 
     // movePerson (toMove) {
@@ -124,6 +135,10 @@ class gameArea {
                     curr.isOverlap = true;
                     compareTo.isOverlap = true;
                     changed = true;
+                    compareTo.vx *= -1;
+                    compareTo.vy *= -1;
+                    curr.vx *= -1;
+                    curr.vy *= -1;
                     break;
                 }
             }
@@ -153,17 +168,17 @@ class gameArea {
 }
 
 class Person {
-    constructor() {
-        this.px = Math.random() * 480;
-        this.py = Math.random() * 270;
+    constructor(width, height) {
+        this.px = Math.random() * width;
+        this.py = Math.random() * height;
         let degree = Math.random() * 2 * Math.PI;
-        this.vx = Math.cos(degree) * .25;
-        this.vy = Math.sin(degree) * .25;
+        this.vx = Math.cos(degree) * 1;
+        this.vy = Math.sin(degree) * 1;
         // this.vx = Math.random() * 1 + Math.random() * -1;
         // this.vy = Math.random() * 1 + Math.random() * -1;
-        this.radius = 5;
-        this.infectionRadius = 10;
-        if (Math.random() > 0.25) {
+        this.radius = 2;
+        this.infectionRadius = 5;
+        if (Math.random() > 0.1) {
             this.isInfected = false; 
         } else {
             this.isInfected = true;
