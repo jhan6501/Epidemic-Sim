@@ -27,16 +27,13 @@ class gameArea {
             let isInfected = false;
             if (Math.random() < .1) {
                 isInfected = true;
-            }
-            this.peopleList[i] = new Person(this.width, this.height, isInfected);
-            if (this.peopleList[i].isInfected) {
                 this.infectedCount++;
             } else {
                 this.notInfectedCount++;
             }
+            this.peopleList[i] = new Person(this.width, this.height, isInfected);
+            
         }
-        //this.peopleList[this.numPeople] = new Person (this.width, this.height, true);
-        this.infectedCount++;
         this.numInfected.x.push(0);
         this.numInfected.y.push(this.infectedCount);
         this.numNotInfected.x.push(0);
@@ -51,7 +48,16 @@ class gameArea {
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
 
         //create the plot
-        Plotly.plot('chart', [this.numInfected, this.numNotInfected]);
+        //Plotly.plot('chart', [this.numInfected, this.numNotInfected]);
+        Plotly.plot('chart', [{
+            y: [this.infectedCount],
+            name: 'infected count',
+            line: {color: 'RED', width: 2}
+          }, {
+            y: [this.notInfectedCount],
+            name: 'not infected count',
+            line: {color: 'BLUE', width: 2}
+          }]);
     }
 
     update() {
