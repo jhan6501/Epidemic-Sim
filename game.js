@@ -1,11 +1,11 @@
 class gameArea {
-    constructor() {
+    constructor(numStart) {
         //this.a = new Person();
         this.canvas = document.createElement("canvas");
         this.ctx = this.canvas.getContext('2d');
         this.width = 720;
         this.height = 500;
-        this.numPeople = 1000;
+        this.numPeople = numStart;
         this.peopleList = [];
         this.numInfected = {
             x: [],
@@ -32,7 +32,7 @@ class gameArea {
                 this.notInfectedCount++;
             }
             this.peopleList[i] = new Person(this.width, this.height, isInfected);
-            
+
         }
         this.numInfected.x.push(0);
         this.numInfected.y.push(this.infectedCount);
@@ -40,7 +40,44 @@ class gameArea {
         this.numNotInfected.y.push(this.notInfectedCount);
         this.framesPassed = 0;
     }
-    
+
+    initializePeople(numStart) {
+        this.numPeople = numStart;
+        this.peopleList = [];
+        this.numInfected = {
+            x: [],
+            y: [],
+            mode: 'lines',
+            line: {color: 'red', width: 2},
+            name: 'infected count'
+        };
+        this.numNotInfected = {
+            x: [],
+            y: [],
+            mode: 'lines',
+            line: {color: 'blue', width: 2},
+            name: 'not infected count'
+        };
+        this.infectedCount = 0;
+        this.notInfectedCount = 0;
+        for (let i = 0; i < this.numPeople; i++) {
+            let isInfected = false;
+            if (Math.random() < .1) {
+                isInfected = true;
+                this.infectedCount++;
+            } else {
+                this.notInfectedCount++;
+            }
+            this.peopleList[i] = new Person(this.width, this.height, isInfected);
+
+        }
+        this.numInfected.x.push(0);
+        this.numInfected.y.push(this.infectedCount);
+        this.numNotInfected.x.push(0);
+        this.numNotInfected.y.push(this.notInfectedCount);
+        this.framesPassed = 0;
+
+    }
     initializeArea() {
         this.canvas.width = this.width;
         this.canvas.height = this.height;
@@ -63,9 +100,9 @@ class gameArea {
     update() {
         this.framesPassed++;
         this.ctx.clearRect(0,0, this.width, this.height);
-        
+
         this.infectPeople(this.peopleList);
-        
+
         //updating the data sets
         this.numInfected.x.push(this.framesPassed);
         this.numInfected.y.push(this.infectedCount);
@@ -75,7 +112,7 @@ class gameArea {
         Plotly.extendTraces('chart', {
             y: [[this.infectedCount],[this.notInfectedCount]],
         }, [0,1]);
-    
+
         this.drawFrame();
     }
 
@@ -117,9 +154,9 @@ class gameArea {
             this.ctx.save();
             this.ctx.beginPath();
             this.ctx.arc(toDraw.px, toDraw.py, toDraw.infectionRadius,0,2 * Math.PI);
-        
+
             this.ctx.strokeStyle = '#FFFF00';
-            
+
             this.ctx.stroke();
 
             this.ctx.restore();
@@ -142,7 +179,7 @@ class gameArea {
             if (!changed) {
                 curr.isOverlap = false;
             }
-            
+
         }
     }
 
@@ -222,10 +259,15 @@ function updateCanvas () {
         window.requestAnimationFrame(updateCanvas);
     }
 }
-
-let area = new gameArea();
+let numStart = 0;
+let area = new gameArea(numStart);
 
 function startGame() {
     area.initializeArea();
+}
+
+function runGame() {
+    numStart = document.getElementById("inputNumber").value;
+    area.initializePeople(numStart);
     updateCanvas();
 }
